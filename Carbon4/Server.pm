@@ -144,7 +144,7 @@ sub listen_accept_server_loop {
 
 sub connection_thread_handler {
 	my ($self, $parent_socket, $socket_id, $socket_no) = @_;
-	$self->warn(1, "[connection] $socket_no");
+	$self->warn(2, "[connection] $socket_no");
 
 	# restore socket from socket number
 	my $receiver = $self->receiver_map->{$parent_socket};

@@ -23,7 +23,8 @@ sub route_directory {
 	return sub {
 		my ($req) = @_;
 
-		my $res;
+		# hold onto this request for future code
+		$self->{request} = $req;
 
 		# some basic munging and filtering of the path
 		my $uri_path = Carbon4::URI->parse($req->uri)->path;
@@ -34,7 +35,7 @@ sub route_directory {
 
 		if (-e $loc) { # if the location exists
 			if (-f _) { # if it's a file
-				$res = $self->load_static_file($loc);
+				return $self->load_static_file($loc);
 			} elsif (-d _) { # if it's a directory
 				if (defined $opts{default_file} and -e -f "$loc/$opts{default_file}") {
 					return $self->load_static_file("$loc/$opts{default_file}");
@@ -81,7 +82,7 @@ sub load_static_file {
 	$res->header('content-length' => -s $filepath);
 	$res->header('content-type' => $self->get_content_type($filepath));
 
-	return $res
+	return $res;
 }
 
 sub load_directory_list {
@@ -101,14 +102,14 @@ sub load_directory_list {
 	$res->content($data);
 	$res->header('content-length' => length $res->content);
 
-	return $res
+	return $res;
 }
 
 sub get_content_type {
 	my ($self, $filepath) = @_;
 
 	my $content_type = Carbon4::HTTP::MIME::get_mime_type($filepath);
-	return $content_type // 'text/plain'
+	return $content_type // 'text/plain';
 }
 
 1;

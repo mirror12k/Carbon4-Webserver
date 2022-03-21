@@ -11,6 +11,7 @@ use Carbon4::Limestone::LimestoneDatabase;
 
 
 
+# this example starts a limestone database on localhost:2047, use querydb.pl for an example of using this database
 my $srv = Carbon4::Server->new(
 	debug => 1,
 	receivers => [ Carbon4::TCPReceiver->new(2047, 'Carbon4::Limestone::JSONPacketConnection', {

@@ -4,7 +4,6 @@ use warnings;
 
 use feature 'say';
 
-use File::Slurper 'read_binary';
 use Sys::Sendfile;
 
 

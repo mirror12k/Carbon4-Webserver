@@ -3,7 +3,6 @@ use strict;
 use warnings;
 
 use feature 'say';
-# use File::Slurper 'read_binary';
 
 use Carbon4::HTTP::MIME;
 use Carbon4::HTTP::Response;
@@ -75,7 +74,6 @@ sub load_static_file {
 	my ($self, $filepath) = @_;
 
 	my $res = Carbon4::HTTP::Response->new('200');
-	# my $data = read_binary($filepath);
 	# $res->content($data);
 	$res->content({ filepath => $filepath });
 	# $res->header('content-length' => length $res->content);

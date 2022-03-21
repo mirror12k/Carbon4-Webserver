@@ -6,6 +6,7 @@ use warnings;
 use feature 'say';
 
 use Carp;
+use File::Temp qw/ tempfile /;
 
 use Carbon4::HTTP::Request;
 use Carbon4::HTTP::Response;
@@ -35,6 +36,16 @@ sub on_data {
 			# } else {
 				$self->{http_request} = $req;
 				$self->{buffer} = $body;
+
+				# say "$req:", $req->as_string;
+
+				if (defined $req->header('content-length') and $req->header('content-length') >= 1024 * 1024) {
+					$self->{read_file} = File::Temp->new(UNLINK => 1);
+					$self->{read_file}->autoflush(1);
+					$self->{read_file}->print($self->{buffer});
+					$self->{buffer} = '';
+					# say "created temp file:", $self->{read_file};
+				}
 			# }
 		}
 	}
@@ -56,6 +67,16 @@ sub on_data {
 				# say "debug got request: ", $req->as_string;
 				$self->{http_request} = undef;
 				$self->on_http_request($req);
+
+			} elsif (defined $self->{read_file} and $req->header('content-length') <= -s $self->{read_file}) {
+				# say "temp file written: $self->{read_file} (", -s $self->{read_file}, " vs ", $req->header('content-length'), ")";
+				$self->{http_request} = undef;
+
+				$req->content({ file => $self->{read_file} });
+				$self->on_http_request($req);
+
+				$self->{read_file} = undef;
+
 			}
 		} else {
 			# if there is no body, start the job immediately
@@ -95,7 +116,7 @@ sub on_result {
 sub on_http_request {
 	my ($self, $req) = @_;
 	
-	$self->{server}->warn(1, $req->message_line);
+	$self->{server}->warn(1, $req->message_line . (defined $req->content and ref $req->content ? " -> " . $req->content->{file} : ''));
 	$self->on_result($self->{callback}->($req));
 }
 

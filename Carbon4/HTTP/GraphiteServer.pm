@@ -59,8 +59,12 @@ sub compile_file {
 
 	my $code = read_binary $filepath;
 
-	$code =~ s/\A(.*?)<\?perl/$self->escape_text($1)/sex;
-	$code =~ s/\?>(.*?)(<\?perl|\Z(?!\s))/$self->escape_text($1)/segx;
+	if ($code =~ /<\?perl/) {
+		$code =~ s/\A(.*?)<\?perl/$self->escape_text($1)/sex;
+		$code =~ s/\?>(.*?)(<\?perl|\Z(?!\s))/$self->escape_text($1)/segx;
+	} else {
+		$code = $self->escape_text($code);
+	}
 
 	$code = "sub { my (\$srv, \$req, \$res) = \@_; $code }";
 	# say "code: $code";

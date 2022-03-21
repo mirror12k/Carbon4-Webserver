@@ -9,7 +9,7 @@ sub new {
 	my ($class) = @_;
 	my $self = bless {}, $class;
 
-	return $self
+	return $self;
 }
 
 sub parse {
@@ -29,7 +29,7 @@ sub parse {
 	$self->query($5);
 	$self->fragment($6);
 
-	return $self
+	return $self;
 }
 
 sub clone {
@@ -48,7 +48,7 @@ sub clone {
 	$clone->query($self->query);
 	$clone->fragment($self->fragment);
 
-	return $clone
+	return $clone;
 }
 
 sub protocol { @_ > 1 ? $_[0]{protocol} = $_[1] : $_[0]{protocol} }
@@ -63,7 +63,7 @@ sub fragment { @_ > 1 ? $_[0]{fragment} = $_[1] : $_[0]{fragment} }
 sub query_form {
 	my ($self) = @_;
 	return {} unless defined $self->query;
-	return { map { ($_->[0] // '') => ($_->[1] // '') } map [split('=', $_, 2)], split '&', $self->query }
+	return { map { ($_->[0] // '') => ($_->[1] // '') } map [split('=', $_, 2)], split '&', $self->query };
 }
 
 sub as_string {
@@ -75,7 +75,7 @@ sub as_string {
 	$uri .= $self->{path} if defined $self->{path};
 	$uri .= '?' . $self->{query} if defined $self->{query};
 	$uri .= '#' . $self->{fragment} if defined $self->{fragment};
-	return $uri
+	return $uri;
 }
 
 sub dump {

@@ -33,7 +33,7 @@ sub new {
 	$self->receiver_map({});
 	$self->is_running(0);
 
-	return $self
+	return $self;
 }
 
 sub debug { @_ > 1 ? $_[0]{debug} = $_[1] : $_[0]{debug} }

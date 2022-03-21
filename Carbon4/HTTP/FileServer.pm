@@ -82,6 +82,10 @@ sub load_static_file {
 	$res->header('content-length' => -s $filepath);
 	$res->header('content-type' => $self->get_content_type($filepath));
 
+	if (-s $filepath > 1024 * 1024) {
+		$res->header('content-disposition' => 'attachment; filename="' . ($filepath =~ s#.*/##sr) . '"');
+	}
+
 	return $res;
 }
 

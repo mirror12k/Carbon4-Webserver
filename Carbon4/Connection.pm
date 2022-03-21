@@ -5,7 +5,7 @@ use warnings;
 use feature 'say';
 
 use File::Slurper 'read_binary';
-
+use Sys::Sendfile;
 
 
 sub new {
@@ -16,16 +16,44 @@ sub new {
 	$self->{socket} = $socket;
 	$self->{buffer} = '';
 	$self->{write_buffer} = '';
-	return $self
+	$self->{read_file} = undef;
+	$self->{write_file} = undef;
+
+	return $self;
 }
 
 sub read_buffered {
 	my ($self) = @_;
 
+	return $self->read_file_buffered if $self->{read_file};
+
 	my $read = $self->{socket}->read($self->{buffer}, 4096 * 64, length $self->{buffer});
 	my $total = $read // 0;
 	while (defined $read and $read > 0) {
 		$read = $self->{socket}->read($self->{buffer}, 4096 * 64, length $self->{buffer});
+		$total += $read if defined $read;
+		# say "error: $!" unless defined $read;
+		# say "debug read loop: $read" if defined $read;
+	}
+	# say "read: $total";
+	# $self->delete_socket($fh) if $total == 0;
+	# $self->remove_self if $total == 0;
+	$self->on_data if $total != 0;
+	return $total != 0;
+}
+
+sub read_file_buffered {
+
+	my ($self) = @_;
+
+	my $read = $self->{socket}->read($self->{buffer}, 4096 * 64, length $self->{buffer});
+	$self->{read_file}->print($self->{buffer}) if $read;
+	$self->{buffer} = '';
+	my $total = $read // 0;
+	while (defined $read and $read > 0) {
+		$read = $self->{socket}->read($self->{buffer}, 4096 * 64, length $self->{buffer});
+		$self->{read_file}->print($self->{buffer}) if $read;
+		$self->{buffer} = '';
 		$total += $read if defined $read;
 		# say "error: $!" unless defined $read;
 		# say "debug read loop: $read" if defined $read;
@@ -50,9 +78,22 @@ sub write_buffered {
 		}
 
 		$self->{write_buffer} = substr $self->{write_buffer}, $wrote;
+	} elsif ($self->{write_file}) {
+		my $wrote = sendfile($self->{socket}, $self->{write_file}, undef, $self->{write_file_offset});
+		# say "file wrote: $wrote : $!";
+		$self->{write_file_offset} += $wrote // 0;
+		while (defined $wrote and $wrote > 0) {
+			$wrote = sendfile($self->{socket}, $self->{write_file}, undef, $self->{write_file_offset});
+			# say "file wrote: $wrote : $!";
+			$self->{write_file_offset} += $wrote // 0;
+		}
+
+		if ($self->{write_file_offset} >= $self->{write_file_length}) {
+			$self->{write_file} = undef;
+		}
 	}
 
-	return length $self->{write_buffer} != 0;
+	return ($self->{write_file} or length $self->{write_buffer} != 0);
 }
 
 sub write_to_output_buffer {
@@ -63,8 +104,9 @@ sub write_to_output_buffer {
 
 sub write_file_to_output_buffer {
 	my ($self, $filepath) = @_;
-	my $data = read_binary $filepath;
-	$self->{write_buffer} .= $data;
+	$self->{write_file_length} = -s $filepath;
+	$self->{write_file} = IO::File->new($filepath, 'r');
+	$self->{write_file_offset} = 0;
 }
 
 sub remove_self {
